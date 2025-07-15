@@ -12,7 +12,7 @@ dependencies = [
   "mani_skill @ git+https://github.com/haosulab/ManiSkill@v3.0.0b15",
   "torch",
   "tyro",
-  # agents
+  "agents @ git+https://github.com/juelg/agents.git"
 ]
 readme = "README.md"
 maintainers = [{ name = "Tobias Jülg", email = "tobias.juelg@utn.de" }]
@@ -28,8 +28,6 @@ dev = [
   "black",
   "isort",
   "mypy",
-  "types-requests",
-  "pybind11-stubgen",
   "build",
   "pytest",
   "commitizen",
