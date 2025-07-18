@@ -6,14 +6,15 @@ import shlex
 
 use_rpd = True
 # env options are "LiftPegUpright-v1", "PegInsertionSide-v1", "PickCube-v1", "PlugCharger-v1", "PokeCube-v1", "PullCube-v1", "PullCubeTool-v1", "PushCube-v1", "RollBall-v1", "StackCube-v1"
-env = "StackCube-v1"
+env = "PickCube-v1"
 loss_type = "mse" # other options: "l1" (l1 loss), "bc" (behavior cloning loss)
-vla_type = "octo" # other options: "octo-base", "openvla", "openvla-base"
+vla_type = "openvla" # other options: "octo-base", "openvla", "openvla-base"
 seed = 0 # this should be varied for mass experiments
 checkpoint_fmt = None # PPO checkpoint path string with {seed} and {task} placeholders, e.g. "checkpoints/{task}/ckpt_{seed}.pt" (hint: VLA paths are changed in the src/rpd/ppo_rgb_rpd.py file at the bottom)
 sparse = False
 note = "some experiment note"
 wandb_entity = "juelg"  # change this to your wandb entity if needed
+vla_conda_path = "/home/juelg/miniconda3/envs/rpd_openvla/bin/python" # adapt this to the conda path of the vla that you train, you can look it up with `conda env list`
 
 
 if checkpoint_fmt is not None:
@@ -33,6 +34,8 @@ if checkpoint_fmt is not None:
     else:
         raise ValueError(f"No checkpoint found")
     print(checkpoint)
+else:
+    checkpoint = None
 
 
 algo = f"PPO_{loss_type}_{'sparse' if sparse else 'dense'}" if not use_rpd else f"RPD_{loss_type}_{'sparse' if sparse else 'dense'}"
@@ -56,7 +59,7 @@ args = [
     "--num_eval_envs=500",
     f"--gamma={0.99 if sparse else 0.8}",
     # "--wandb_project_name=ManiSkill_different_camera_angle",
-    f"--sparse={sparse}",
+    "--dense" if not sparse else "--no-dense",
     f"--wandb-entity={wandb_entity}",
 ]
 if use_rpd:
@@ -64,6 +67,7 @@ if use_rpd:
     args.append("--num-vla-samples=1") # increasing this will lead to action sampling from the vla and take much more time
     args.append(f"--vlad_loss_type={loss_type}")
     args.append(f"--vla_type={vla_type}")
+    args.append(f"--vla_conda_path={vla_conda_path}")
     # args.append("--max-ppd-anneal-steps=6_000_000")
 
 if checkpoint is not None:

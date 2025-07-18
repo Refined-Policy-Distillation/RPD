@@ -31,7 +31,7 @@ from time import sleep
 from multiprocessing import shared_memory
 import time
 
-from rpd.wrappers import HumanCameraWrapper
+from agents.wrappers import HumanCameraWrapper
 
 
 logging.basicConfig(
@@ -144,8 +144,8 @@ class Args:
     save_train_video_freq: Optional[int] = None
     """frequency to save training videos in terms of iterations"""
     finite_horizon_gae: bool = True
-    """sparse reward"""
-    sparse: bool = False
+    """dense reward"""
+    dense: bool = True
 
     ppd_lambda: float = 1.0
     """Lambda parameter in the ppd loss"""
@@ -154,7 +154,9 @@ class Args:
     vlad_loss_type: str = "mse"
     """VLAD loss type for case of num_vla_samples=1: 'mse', 'l1', 'bc'"""
     vla_type: str = "octo"
-    """foundation model type, options are 'octo', 'octo-base', 'openvla', 'openvla-base'"""
+    """vla type, options are 'octo', 'octo-base', 'openvla', 'openvla-base'"""
+    vla_conda_path: str = "python"
+    """path to the conda environment where the vla is installed, see the readme of the agents library for information on how to install the conda envs."""
 
     max_ppd_anneal_steps: Optional[int] = None
     """Number of annealing steps in the PPD lambda parameter"""
@@ -355,7 +357,7 @@ def main(server_type: str, port: int, args: Args):
         logging.info("Waiting for model to initialize")
         sleep(1)
     # model.reset(obs=Obs(rgb_side=np.zeros((256, 256, 3))), instruction=INSTRUCTIONS[args.env_id])
-    model.reset(obs=Obs(rgb_side=None), instruction=INSTRUCTIONS[args.env_id])
+    model.reset(obs=Obs(), instruction=INSTRUCTIONS[args.env_id])
 
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
@@ -371,7 +373,7 @@ def main(server_type: str, port: int, args: Args):
         sim_backend="gpu",
         control_mode="pd_ee_delta_pose",
         render_mode="rgb_array", # all leads to duplicated view
-        reward_mode="normalized_dense" if not args.sparse else "sparse",
+        reward_mode="normalized_dense" if args.dense else "sparse",
         # sensor_configs={"width": 256, "height": 256},
         # "sensor_configs": {"width": 256, "height": 256, "shader_pack": "rt"},
         human_render_camera_configs={"width": 256, "height": 256},
@@ -710,7 +712,7 @@ if __name__ == "__main__":
 
     args = tyro.cli(Args)
     if args.vla_type == "octo":
-        kwargs = {"checkpoint_path": "hf://Juelg/octo-base-1.5-finetuned-maniskill", "checkpoint_step": 60000, "horizon": 1, "unnorm_key": []}
+        kwargs = {"checkpoint_path": "hf://Juelg/octo-base-1.5-finetuned-maniskill", "checkpoint_step": None, "horizon": 1, "unnorm_key": []}
         server_type = "octodist"
     elif args.vla_type == "octo-base":
         kwargs = {"checkpoint_path": "hf://rail-berkeley/octo-base-1.5", "checkpoint_step": None, "horizon": 1, "unnorm_key": []}
@@ -748,7 +750,7 @@ if __name__ == "__main__":
 
 
     port = random.randint(10000, 40000)
-    with start_server(server_type, kwargs, port, "localhost", python_path="conda run -n {agent_name} python") as p:
+    with start_server(server_type, kwargs, port, "localhost", python_path=args.vla_conda_path) as p:
         sleep(5)
         main(server_type, port, args)
         p.send_signal(subprocess.signal.SIGINT)

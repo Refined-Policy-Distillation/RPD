@@ -16,7 +16,7 @@ from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
 # ManiSkill specific imports
-from mani_skill.trajectory.replay_trajectory import HumanCameraWrapper
+from agents.wrappers import HumanCameraWrapper
 import mani_skill.envs
 from mani_skill.utils import gym_utils
 from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper, FlattenRGBDObservationWrapper
@@ -112,8 +112,8 @@ class Args:
     save_train_video_freq: Optional[int] = None
     """frequency to save training videos in terms of iterations"""
     finite_horizon_gae: bool = True
-    """sparse reward"""
-    sparse: bool = False
+    """dense reward"""
+    dense: bool = True
 
     # to be filled in runtime
     batch_size: int = 0
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         sim_backend="gpu",
         control_mode="pd_ee_delta_pose",
         render_mode="rgb_array", # all leads to duplicated view
-        reward_mode="normalized_dense" if not args.sparse else "sparse",
+        reward_mode="normalized_dense" if args.dense else "sparse",
         # sensor_configs={"width": 256, "height": 256},
         # "sensor_configs": {"width": 256, "height": 256, "shader_pack": "rt"},
         human_render_camera_configs={"width": 256, "height": 256},

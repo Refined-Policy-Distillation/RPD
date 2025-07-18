@@ -12,7 +12,8 @@ dependencies = [
   "mani_skill @ git+https://github.com/haosulab/ManiSkill@v3.0.0b15",
   "torch",
   "tyro",
-  "agents @ git+https://github.com/juelg/agents.git"
+  "agents @ git+https://github.com/juelg/agents.git",
+  "tensorboard",
 ]
 readme = "README.md"
 maintainers = [{ name = "Tobias Jülg", email = "tobias.juelg@utn.de" }]
